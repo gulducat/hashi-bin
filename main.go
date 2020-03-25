@@ -1,9 +1,7 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"net/http"
+	"log"
 	"os"
 
 	"github.com/go-chi/chi"
@@ -12,36 +10,38 @@ import (
 )
 
 var (
-	index              = NewIndex()
-	ListenPort         = ":8080"
-	appVersion         = "v1.0.1"
-	versionCommandHelp = "output the version of the application"
+	index      = NewIndex()
+	ListenPort = ":8080"
+	// appVersion         = "v1.0.1"
+	versionCommandHelp = "output the version of this application"
 )
 
-type versionCommand struct{}
+// type versionCommand struct{}
 
-func (vc versionCommand) Help() string {
-	return versionCommandHelp
-}
+// func (vc versionCommand) Help() string {
+// 	return versionCommandHelp
+// }
 
-func (vc versionCommand) Run(args []string) int {
-	fmt.Println(appVersion)
-	return 0
-}
+// func (vc versionCommand) Run(args []string) int {
+// 	fmt.Println(appVersion)
+// 	return 0
+// }
 
-func (vc versionCommand) Synopsis() string {
-	return versionCommandHelp
-}
+// func (vc versionCommand) Synopsis() string {
+// 	return versionCommandHelp
+// }
 
-func versionFactory() (cli.Command, error) {
-	return versionCommand{}, nil
-}
+// func versionFactory() (cli.Command, error) {
+// 	return versionCommand{}, nil
+// }
 
 func main() {
-	c := cli.NewCLI("hashi-releases", "0.0.1")
+	log.SetFlags(0) // remove timestamp from log messages
+	c := cli.NewCLI("hashi", "0.1.0")
 	c.Args = os.Args[1:]
-	c.Commands = index.Commands()
-	c.Commands["version"] = versionFactory
+	// c.GlobalFlags = ......
+	c.Commands = GetCommands(&index)
+	// c.Commands["version"] = versionFactory
 	exitStatus, err := c.Run()
 	if err != nil {
 		panic(err)
@@ -59,56 +59,4 @@ func Route() *chi.Mux {
 	r.Get("/versions/{product}", handleListVersions)
 	r.Get("/list", handleListProducts)
 	return r
-}
-
-func handleRoot(w http.ResponseWriter, r *http.Request) {
-	resp := struct {
-		AvailableRoutes []string `json:"available_routes"`
-	}{
-		AvailableRoutes: []string{
-			"list",
-			"/latest/{product}",
-			"/versions/{product}",
-		},
-	}
-	json.NewEncoder(w).Encode(resp)
-}
-
-func handleListProducts(w http.ResponseWriter, r *http.Request) {
-	products := index.ListProducts()
-	json.NewEncoder(w).Encode(products)
-}
-
-func handleProductLatest(w http.ResponseWriter, r *http.Request) {
-	product := chi.URLParam(r, "product")
-	latest := index.LatestVersion(product)
-	if latest == "" {
-		http.Error(w, product+" not found", http.StatusNotFound)
-		return
-	}
-	resp := struct {
-		Product string `json:"product"`
-		Latest  string `json:"latest_version"`
-	}{
-		Product: product,
-		Latest:  latest,
-	}
-	json.NewEncoder(w).Encode(resp)
-}
-
-func handleListVersions(w http.ResponseWriter, r *http.Request) {
-	product := chi.URLParam(r, "product")
-	versions := index.ListVersions(product)
-	if versions == nil {
-		http.Error(w, product+" not found", http.StatusNotFound)
-		return
-	}
-	resp := struct {
-		Product  string   `json:"product"`
-		Versions []string `json:"versions"`
-	}{
-		Product:  product,
-		Versions: versions,
-	}
-	json.NewEncoder(w).Encode(resp)
 }
