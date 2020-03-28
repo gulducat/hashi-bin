@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 	"path"
-	"regexp"
+	"strings"
 
 	"github.com/hashicorp/go-version"
 	"github.com/mitchellh/cli"
@@ -30,16 +30,17 @@ func GetOptions() ExtraOptions {
 	}
 }
 
-func GetCommands(i *Index) map[string]cli.CommandFactory {
+func GetCommands(c *cli.CLI, i *Index) map[string]cli.CommandFactory {
 	commands := make(map[string]cli.CommandFactory)
 
 	options := map[string]string{
-		"list-available": "List available versions of a product",
-		"list":           "List installed versions of a product",
-		"download":       "Download to the current directory",
+		"list-available": "List available versions of a product.",
+		"list":           "List installed versions of a product.",
+		"download":       "Download to the current directory.",
 		"install":        "Install to ~/.hashi-bin/{product}/{version} (or env $HASHI_BIN)",
-		"uninstall":      "Delete ~/.hashi-bin/{product}/{version} and remove symlink",
+		"uninstall":      "Delete ~/.hashi-bin/{product}/{version} and remove symlink.",
 		"use":            "Symlink /usr/local/bin/{product} (or env $HASHI_LINKS) -> ~/.hashi-bin/{product}/{version}",
+		// TODO: "clean" to remove inactive versions of all products?
 	}
 
 	// top-level help
@@ -48,26 +49,23 @@ func GetCommands(i *Index) map[string]cli.CommandFactory {
 		synopsis := synopsis
 		commands[option] = func() (cli.Command, error) {
 			return &TopLevelHelp{
+				cli:      c,
+				commands: &commands,
+				option:   option,
 				index:    i,
 				synopsis: synopsis,
 			}, nil
 		}
 	}
 
-	extraOptions := GetOptions()
-
 	for _, product := range i.Products {
-		if !extraOptions.all && !InArray(CoreProducts, product.Name) {
-			continue
-		}
 
 		name := product.Name
-		list := product.Sorted
+		versions := product.Sorted
 
 		commands["list-available "+name] = func() (cli.Command, error) {
 			return &ListAvailableCommand{
-				list:    list,
-				options: &extraOptions,
+				versions: versions,
 			}, nil
 		}
 		commands["list "+name] = func() (cli.Command, error) {
@@ -97,6 +95,9 @@ func GetCommands(i *Index) map[string]cli.CommandFactory {
 // top-level command help
 
 type TopLevelHelp struct {
+	cli      *cli.CLI
+	commands *map[string]cli.CommandFactory
+	option   string
 	index    *Index
 	synopsis string
 }
@@ -110,24 +111,26 @@ func (hc *TopLevelHelp) Help() string {
 }
 
 func (hc *TopLevelHelp) Run(args []string) int {
-	if len(args) == 0 {
-		log.Println(hc.Help())
-		// for _, p := range hc.index.ListProducts() {
-		// 	fmt.Println(p)
-		// }
-		// fmt.Println("HELLO FROM TopLevelHelp.Run()!")
-	} else {
-		log.Println("unknown command..")
+	log.Println(hc.HelpTemplate())
+	return 127 // 127 to match normal help, because nothing has been done..
+}
+
+// TODO: interesting, this applies only when -h is specified
+func (hc *TopLevelHelp) HelpTemplate() string {
+	// TODO: this help logic is a bit goofy..?
+	commands := make(map[string]cli.CommandFactory)
+	for cmd, cft := range *hc.commands {
+		if strings.HasPrefix(cmd, hc.option+" ") {
+			commands[cmd] = cft
+		}
 	}
-	log.Println("Add `-h` to list products")
-	return 0
+	return hc.Help() + "\n\n" + hc.cli.HelpFunc(commands)
 }
 
 // list-available reads from releases API
 
 type ListAvailableCommand struct {
-	list    version.Collection
-	options *ExtraOptions
+	versions version.Collection
 }
 
 func (lc *ListAvailableCommand) Help() string {
@@ -139,31 +142,7 @@ func (lc *ListAvailableCommand) Synopsis() string {
 }
 
 func (lc *ListAvailableCommand) Run(args []string) int {
-	reBeta := regexp.MustCompile(`-(beta|rc)`)
-	reEnt := regexp.MustCompile(`\+ent`)
-	for _, v := range lc.list {
-
-		// TODO: these conditionals feel pretty bad.
-		// TODO: this version restriction logic should go somewhere else.
-		if lc.options.all {
-			fmt.Println(v)
-			continue
-		}
-
-		vString := v.Original()
-		// hide -beta* and -rc* if not -with-beta
-		if !lc.options.beta && reBeta.FindStringIndex(vString) != nil {
-			continue
-		}
-		// hide +ent if not -only-enterprise
-		if !lc.options.ent && reEnt.FindStringIndex(vString) != nil {
-			continue
-		}
-		// show only +ent if -only-enterprise
-		if lc.options.ent && reEnt.FindStringIndex(vString) == nil {
-			continue
-		}
-
+	for _, v := range lc.versions {
 		fmt.Println(v)
 	}
 	return 0
@@ -184,7 +163,7 @@ func (ic *ListCommand) Help() string {
 }
 
 func (ic *ListCommand) Run(args []string) int {
-	// TODO: split this stuff out, so Help() can show all installed product versions?
+	// TODO: split this stuff out, so Help() can show all products?
 
 	// get current symlink target if present
 	current := ""
@@ -195,7 +174,7 @@ func (ic *ListCommand) Run(args []string) int {
 		_, current = path.Split(target)
 	}
 
-	// ls hashi-bin/product/ to discover installed versions
+	// ls hashi-bin/{product}/ to discover installed versions
 	binDir, err := BinDir(ic.product)
 	if err != nil {
 		log.Println(err)

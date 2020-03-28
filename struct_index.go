@@ -27,6 +27,7 @@ func NewIndex() Index {
 	if etag == "" {
 		panic("no etag found")
 	}
+
 	// TODO: cache expiration or purge
 	cacheFilePath := path.Join(tmpDir, etag, etag+indexSuffix)
 
@@ -43,10 +44,24 @@ func NewIndex() Index {
 			panic(err)
 		}
 	}
-	var index Index
-	if err = json.Unmarshal(b, &index.Products); err != nil {
+
+	// this intermediary `products` var is so the Index only gets core Products unless -all
+	var products map[string]*Product
+	if err = json.Unmarshal(b, &products); err != nil {
 		panic(err)
 	}
+
+	opts := GetOptions()
+	index := Index{
+		Products: make(map[string]*Product),
+	}
+	for n, p := range products {
+		if !opts.all && !InArray(CoreProducts, n) {
+			continue
+		}
+		index.Products[n] = p
+	}
+
 	for _, v := range index.Products {
 		if err = v.sortVersions(); err != nil {
 			panic(err)

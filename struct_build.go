@@ -84,7 +84,7 @@ func (b *Build) Install() error {
 		return err
 	}
 	log.Printf("installed to: %s\n", newFilePath)
-	log.Printf("to use: `hashi use %s %s`\n", b.Product, b.Version)
+	log.Printf("to use: `hashi-bin use %s %s`\n", b.Product, b.Version)
 	return nil
 }
 

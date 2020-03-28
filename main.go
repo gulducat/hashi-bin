@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -35,12 +36,24 @@ var (
 // 	return versionCommand{}, nil
 // }
 
+// TODO: help suffix?
+func HelpyHelp(app string) cli.HelpFunc {
+	// basic := cli.BasicHelpFunc(app)
+	return func(commands map[string]cli.CommandFactory) string {
+		return strings.TrimSpace(`
+		Usage: hashi-bin [--version] [--help] <product> [version] [-all] [-with-beta] [-only-enterprise]
+
+		`)
+	}
+}
+
 func main() {
 	log.SetFlags(0) // remove timestamp from log messages
-	c := cli.NewCLI("hashi", "0.1.0")
+	c := cli.NewCLI("hashi-bin", "0.1.0")
+	// c.HelpFunc = HelpyHelp(c.Name)
 	c.Args = os.Args[1:]
 	// c.GlobalFlags = ......
-	c.Commands = GetCommands(&index)
+	c.Commands = GetCommands(c, &index)
 	// c.Commands["version"] = versionFactory
 	exitStatus, err := c.Run()
 	if err != nil {

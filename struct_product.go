@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"sort"
 
 	"github.com/hashicorp/go-version"
@@ -32,9 +33,31 @@ func (p *Product) LatestVersion() *Version {
 }
 
 func (p *Product) sortVersions() error {
-	collection := make(version.Collection, len(p.Versions))
+	// exclude some versions based on options
+	opts := GetOptions()
+	versions := make(map[string]*Version)
+	reBeta := regexp.MustCompile(`-(beta|rc)`)
+	reEnt := regexp.MustCompile(`\+ent`)
+	for s, v := range p.Versions {
+		// hide -beta* and -rc* if not -with-beta
+		if !opts.beta && reBeta.FindStringIndex(s) != nil {
+			continue
+		}
+		// hide +ent if not -only-enterprise
+		if !opts.ent && reEnt.FindStringIndex(s) != nil {
+			continue
+		}
+		// show only +ent if -only-enterprise
+		if opts.ent && reEnt.FindStringIndex(s) == nil {
+			continue
+		}
+		versions[s] = v
+	}
+
+	// do sorting
+	collection := make(version.Collection, len(versions))
 	var idx int
-	for k, _ := range p.Versions {
+	for k, _ := range versions {
 		v, err := version.NewVersion(k)
 		if err != nil {
 			return err
