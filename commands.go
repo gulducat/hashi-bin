@@ -47,7 +47,6 @@ func GetCommands(c *cli.CLI, i *Index) map[string]cli.CommandFactory {
 		commands[option] = func() (cli.Command, error) {
 			return &TopLevelHelp{
 				cli:      c,
-				commands: &commands,
 				option:   option,
 				index:    i,
 				synopsis: synopsis,
@@ -72,11 +71,28 @@ func GetCommands(c *cli.CLI, i *Index) map[string]cli.CommandFactory {
 	return commands
 }
 
+func GetHiddenCommands(c *cli.CLI) []string {
+	// exclude all but core products unless -all
+	// note: c.Commands must already be populated
+	hidden := []string{}
+	opts := GetOptions()
+	for cmd, _ := range c.Commands {
+		parts := strings.Split(cmd, " ")
+		if len(parts) != 2 {
+			continue
+		}
+		product := parts[1]
+		if !opts.all && !InArray(CoreProducts, product) {
+			hidden = append(hidden, cmd)
+		}
+	}
+	return hidden
+}
+
 // top-level command help
 
 type TopLevelHelp struct {
 	cli      *cli.CLI
-	commands *map[string]cli.CommandFactory
 	option   string
 	index    *Index
 	synopsis string
@@ -99,7 +115,10 @@ func (hc *TopLevelHelp) Run(args []string) int {
 func (hc *TopLevelHelp) HelpTemplate() string {
 	// TODO: this help logic is a bit goofy..?
 	commands := make(map[string]cli.CommandFactory)
-	for cmd, cft := range *hc.commands {
+	for cmd, cft := range hc.cli.Commands {
+		if InArray(hc.cli.HiddenCommands, cmd) {
+			continue
+		}
 		if strings.HasPrefix(cmd, hc.option+" ") {
 			commands[cmd] = cft
 		}

@@ -54,6 +54,7 @@ func main() {
 	c.Args = os.Args[1:]
 	// c.GlobalFlags = ......
 	c.Commands = GetCommands(c, &index)
+	c.HiddenCommands = GetHiddenCommands(c)
 	// c.Commands["version"] = versionFactory
 	exitStatus, err := c.Run()
 	if err != nil {

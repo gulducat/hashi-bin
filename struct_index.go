@@ -48,14 +48,10 @@ func NewIndex() Index {
 		panic(err)
 	}
 
-	opts := GetOptions()
 	index := Index{
 		Products: make(map[string]*Product),
 	}
 	for n, p := range products {
-		if !opts.all && !InArray(CoreProducts, n) {
-			continue
-		}
 		index.Products[n] = p
 	}
 
