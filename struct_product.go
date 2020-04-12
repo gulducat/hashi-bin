@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
+	"strings"
 
 	"github.com/hashicorp/go-version"
 )
@@ -49,6 +50,10 @@ func (p *Product) sortVersions() error {
 		}
 		// show only +ent if -only-enterprise
 		if opts.ent && reEnt.FindStringIndex(s) == nil {
+			continue
+		}
+		// hide vault ".hsm" files
+		if strings.HasSuffix(s, ".hsm") {
 			continue
 		}
 		versions[s] = v
