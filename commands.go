@@ -3,10 +3,8 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
-	"path"
 	"strings"
 
 	"github.com/mitchellh/cli"
@@ -58,21 +56,10 @@ func GetCommands(c *cli.CLI, i *Index) map[string]cli.CommandFactory {
 	}
 
 	for _, product := range i.Products {
-
-		name := product.Name
-
-		commands["list "+name] = func() (cli.Command, error) {
-			return &ListCommand{
-				product: name,
-			}, nil
-		}
+		product := product
 		for option, _ := range options {
 			option := option
-			// TODO: something other than this hard-coded list/list-available exclusion...?
-			if option == "list" {
-				continue
-			}
-			commands[option+" "+name] = func() (cli.Command, error) {
+			commands[option+" "+product.Name] = func() (cli.Command, error) {
 				return &FancyCommand{
 					index:   i,
 					product: product,
@@ -120,59 +107,6 @@ func (hc *TopLevelHelp) HelpTemplate() string {
 	return hc.Help() + "\n\n" + hc.cli.HelpFunc(commands)
 }
 
-// `list` reads the local filesystem
-
-type ListCommand struct {
-	product string
-}
-
-func (ic *ListCommand) Synopsis() string {
-	return ""
-}
-
-func (ic *ListCommand) Help() string {
-	return fmt.Sprintf("show installed versions of %s", ic.product)
-}
-
-func (ic *ListCommand) Run(args []string) int {
-	// TODO: split this stuff out, so Help() can show all products?
-
-	// get current symlink target if present
-	current := ""
-	link := LinkPath(ic.product)
-	target, err := os.Readlink(link)
-	if err == nil {
-		log.Printf("%s -> %s\n", link, target)
-		_, current = path.Split(target)
-	}
-
-	// ls hashi-bin/{product}/ to discover installed versions
-	binDir, err := BinDir(ic.product)
-	if err != nil {
-		log.Println(err)
-		return 1
-	}
-	fileInfo, err := ioutil.ReadDir(binDir)
-	if err != nil {
-		log.Println(err)
-		return 1
-	}
-
-	// prepend * to current active version
-	for _, file := range fileInfo {
-		name := file.Name()
-		if name == current {
-			fmt.Printf("* %s\n", name)
-		} else {
-			fmt.Printf("  %s\n", name)
-		}
-	}
-	return 0
-}
-
-// all other commands are "FancyCommand"s
-// download, install, use, uninstall
-
 type FancyCommand struct {
 	index   *Index
 	product *Product
@@ -193,10 +127,20 @@ func (fc *FancyCommand) Run(args []string) int {
 
 	// These commands require no version argument
 	switch fc.command {
-	// TOOD: case "list"
 	case "list-available":
 		for _, v := range fc.product.Sorted {
 			fmt.Println(v)
+		}
+		return 0
+	case "list":
+		installed, err := ListInstalled(fc.product.Name)
+		if err != nil {
+			log.Println(err)
+			return 1
+		}
+		for _, result := range installed {
+			result := result
+			fmt.Println(result)
 		}
 		return 0
 	}
