@@ -9,7 +9,6 @@ import (
 	"path"
 	"strings"
 
-	"github.com/hashicorp/go-version"
 	"github.com/mitchellh/cli"
 )
 
@@ -61,13 +60,7 @@ func GetCommands(c *cli.CLI, i *Index) map[string]cli.CommandFactory {
 	for _, product := range i.Products {
 
 		name := product.Name
-		versions := product.Sorted
 
-		commands["list-available "+name] = func() (cli.Command, error) {
-			return &ListAvailableCommand{
-				versions: versions,
-			}, nil
-		}
 		commands["list "+name] = func() (cli.Command, error) {
 			return &ListCommand{
 				product: name,
@@ -76,13 +69,13 @@ func GetCommands(c *cli.CLI, i *Index) map[string]cli.CommandFactory {
 		for option, _ := range options {
 			option := option
 			// TODO: something other than this hard-coded list/list-available exclusion...?
-			if option == "list" || option == "list-available" {
+			if option == "list" {
 				continue
 			}
 			commands[option+" "+name] = func() (cli.Command, error) {
 				return &FancyCommand{
 					index:   i,
-					product: name,
+					product: product,
 					command: option,
 				}, nil
 			}
@@ -125,27 +118,6 @@ func (hc *TopLevelHelp) HelpTemplate() string {
 		}
 	}
 	return hc.Help() + "\n\n" + hc.cli.HelpFunc(commands)
-}
-
-// list-available reads from releases API
-
-type ListAvailableCommand struct {
-	versions version.Collection
-}
-
-func (lc *ListAvailableCommand) Help() string {
-	return ""
-}
-
-func (lc *ListAvailableCommand) Synopsis() string {
-	return ""
-}
-
-func (lc *ListAvailableCommand) Run(args []string) int {
-	for _, v := range lc.versions {
-		fmt.Println(v)
-	}
-	return 0
 }
 
 // `list` reads the local filesystem
@@ -203,7 +175,7 @@ func (ic *ListCommand) Run(args []string) int {
 
 type FancyCommand struct {
 	index   *Index
-	product string
+	product *Product
 	command string
 }
 
@@ -212,19 +184,31 @@ func (fc *FancyCommand) Synopsis() string {
 }
 
 func (fc *FancyCommand) Help() string {
-	return fmt.Sprintf("provide 'latest' or a version from `hashi list-available %s` to %s", fc.product, fc.command)
+	return fmt.Sprintf("provide 'latest' or a version from `hashi list-available %s` to %s",
+		fc.product.Name, fc.command)
 }
 
 func (fc *FancyCommand) Run(args []string) int {
 	var err error
 
+	// These commands require no version argument
+	switch fc.command {
+	// TOOD: case "list"
+	case "list-available":
+		for _, v := range fc.product.Sorted {
+			fmt.Println(v)
+		}
+		return 0
+	}
+
+	// all remaining commands require version
 	if len(args) < 1 { // additional args will be swallowed without notice.
 		log.Println(fc.Help())
 		return 1
 	}
 	versionString := args[0]
 
-	product, version, err := fc.index.GetProductVersion(fc.product, versionString)
+	version, err := fc.product.GetVersion(versionString)
 	if err != nil {
 		log.Println(err)
 		return 1
@@ -235,15 +219,15 @@ func (fc *FancyCommand) Run(args []string) int {
 		return 1
 	}
 
-	log.Printf("%s-ing %s %s\n", fc.command, product.Name, version.Version)
+	log.Printf("%s-ing %s %s\n", fc.command, fc.product.Name, version.Version)
 
 	switch fc.command {
 	case "download":
 		// TODO: this feels bad, do something else to download vagrant?
-		if localOS == "darwin" && InArray(DmgOnly, product.Name) {
+		if localOS == "darwin" && InArray(DmgOnly, fc.product.Name) {
 			_, err = build.DownloadAndSave(build.Filename)
 		} else {
-			_, err = build.DownloadAndExtract("", product.Name)
+			_, err = build.DownloadAndExtract("", fc.product.Name)
 		}
 	case "install":
 		err = build.Install()
