@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"path"
 	"strings"
@@ -15,9 +14,7 @@ type Index struct {
 }
 
 func NewIndex() Index {
-	// fmt.Printf("TMPDIR: %s\n", tmpDir)
-	// TODO: User-Agent
-	resp, err := http.Get(ReleasesURL + "/index.json")
+	resp, err := HTTPGet(ReleasesURL + "/index.json")
 	if err != nil {
 		panic(err)
 	}

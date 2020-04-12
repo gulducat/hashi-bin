@@ -3,7 +3,6 @@ package main
 import (
 	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"path"
 )
@@ -17,22 +16,8 @@ type Build struct {
 	URL      string `json:"url"`
 }
 
-func (b *Build) Download() ([]byte, error) {
-	// TODO: set a User Agent https://stackoverflow.com/questions/13263492/set-useragent-in-http-request
-	resp, err := http.Get(b.URL)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	bts, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	return bts, nil
-}
-
 func (b *Build) DownloadAndCheck() ([]byte, error) {
-	bts, err := b.Download()
+	bts, err := HTTPGetBody(b.URL)
 	if err != nil {
 		return nil, err
 	}

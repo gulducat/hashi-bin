@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"io/ioutil"
-	"net/http"
 	"path"
 	"strings"
 )
@@ -46,7 +45,7 @@ func CheckBytes(fileName string, b []byte) error {
 }
 
 func GetSHASums(product, version string) (map[string][]byte, error) {
-	resp, err := http.Get(SHASumLink(product, version))
+	resp, err := HTTPGet(SHASumLink(product, version))
 	if err != nil {
 		return nil, err
 	}
