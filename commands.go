@@ -18,8 +18,7 @@ type ExtraOptions struct {
 
 func GetOptions() ExtraOptions {
 	// feels a bit jank but it works..
-	// TODO: surely there's a better way to parse extra flags
-	// TODO: regardless, add to -h
+	// TODO: add these args to -h somehow...
 	return ExtraOptions{
 		all:  os.Getenv("HASHI_ALL") != "" || InArray(os.Args, "-all"),
 		beta: os.Getenv("HASHI_BETA") != "" || InArray(os.Args, "-with-beta"),
@@ -37,10 +36,10 @@ func GetCommands(c *cli.CLI, i *Index) map[string]cli.CommandFactory {
 		"install":        "Install to ~/.hashi-bin/{product}/{version} (or env $HASHI_BIN)",
 		"uninstall":      "Delete ~/.hashi-bin/{product}/{version} and remove symlink.",
 		"use":            "Symlink /usr/local/bin/{product} (or env $HASHI_LINKS) -> ~/.hashi-bin/{product}/{version}",
-		// TODO: "clean" to remove inactive versions of all products?
+		// TODO: "clean" or "prune" to remove inactive versions of all products?
 	}
 
-	// top-level help
+	// top-level help TODO: fit into FancyCommand?
 	for option, synopsis := range options {
 		option := option
 		synopsis := synopsis
@@ -107,13 +106,15 @@ func (hc *TopLevelHelp) Help() string {
 }
 
 func (hc *TopLevelHelp) Run(args []string) int {
+	// HelpTemplate() is called when -h is passed explicitly,
+	// but we want it to also happen with no -h
 	log.Println(hc.HelpTemplate())
-	return 127 // 127 to match normal help, because nothing has been done..
+	return 127 // 127 to match normal help, because nothing has been done.
 }
 
-// TODO: interesting, this applies only when -h is specified
 func (hc *TopLevelHelp) HelpTemplate() string {
-	// TODO: this help logic is a bit goofy..?
+	// this is a bit goofy..  we loop through all of the commands
+	// to include only sub-commands for this one command.
 	commands := make(map[string]cli.CommandFactory)
 	for cmd, cft := range hc.cli.Commands {
 		if InArray(hc.cli.HiddenCommands, cmd) {

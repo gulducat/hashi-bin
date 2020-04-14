@@ -9,7 +9,7 @@ type Version struct {
 }
 
 func (v *Version) GetBuild(os string, arch string) *Build {
-	// TODO: feels bad, dumb darwin arches for vagrant .dmg downloads...
+	// TODO: feels bad, darwin arches for vagrant .dmg downloads...
 	arches := []string{arch}
 	if localOS == "darwin" {
 		arches = []string{"amd64", "x86_64"}

@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"os"
-	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -37,15 +36,6 @@ var (
 // }
 
 // TODO: help suffix?
-func HelpyHelp(app string) cli.HelpFunc {
-	// basic := cli.BasicHelpFunc(app)
-	return func(commands map[string]cli.CommandFactory) string {
-		return strings.TrimSpace(`
-		Usage: hashi-bin [--version] [--help] <product> [version] [-all] [-with-beta] [-only-enterprise]
-
-		`)
-	}
-}
 
 func main() {
 	log.SetFlags(0) // remove timestamp from log messages
@@ -54,6 +44,7 @@ func main() {
 	c.Args = os.Args[1:]
 	// c.GlobalFlags = ......
 	c.Commands = GetCommands(c, &index)
+	// note: i'm not using this quite right... TopLevelHelp is actually handling this.
 	c.HiddenCommands = GetHiddenCommands(c)
 	// c.Commands["version"] = versionFactory
 	exitStatus, err := c.Run()
