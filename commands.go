@@ -136,7 +136,7 @@ func (fc *FancyCommand) Run(args []string) int {
 	// These commands require no version argument
 	switch fc.command {
 	case "list-available":
-		for _, v := range fc.product.Sorted {
+		for _, v := range fc.product.ListVersions() {
 			fmt.Println(v)
 		}
 		return 0

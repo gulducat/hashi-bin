@@ -3,7 +3,6 @@ package types
 import (
 	"errors"
 	"fmt"
-	"regexp"
 	"sort"
 	"strings"
 
@@ -34,36 +33,46 @@ func (p *Product) LatestVersion() *Version {
 	return p.Versions[versionString]
 }
 
-func (p *Product) sortVersions() error {
+func (p *Product) ListVersions() []string {
+	var versions []string
+
 	// exclude some versions based on options
 	opts := util.GetOptions()
-	versions := make(map[string]*Version)
-	reBeta := regexp.MustCompile(`-(beta|rc)`)
-	reEnt := regexp.MustCompile(`\+ent`)
-	for s, v := range p.Versions {
-		// hide -beta* and -rc* if not -with-beta
-		if !opts.Beta && reBeta.FindStringIndex(s) != nil {
+
+	for _, v := range p.Sorted {
+		vString := v.Original()
+
+		// hide vault ".hsm" files - they're not useful for us here.
+		if strings.HasSuffix(vString, ".hsm") {
 			continue
 		}
-		// hide +ent if not -only-enterprise
-		if !opts.Ent && reEnt.FindStringIndex(s) != nil {
+
+		if opts.All { // show all the things
+			versions = append(versions, vString)
 			continue
 		}
-		// show only +ent if -only-enterprise
-		if opts.Ent && reEnt.FindStringIndex(s) == nil {
+
+		v, _ := p.GetVersion(vString)
+		if !opts.Beta && v.IsBeta() { // hide -beta* and -rc* if not -with-beta
 			continue
 		}
-		// hide vault ".hsm" files
-		if strings.HasSuffix(s, ".hsm") {
+		if !opts.Ent && v.IsEnterprise() { // hide +ent if not -enterprise
 			continue
 		}
-		versions[s] = v
+		if opts.Ent && !v.IsEnterprise() { // show only +ent if -enterprise
+			continue
+		}
+
+		versions = append(versions, vString)
 	}
 
-	// do sorting
-	collection := make(version.Collection, len(versions))
+	return versions
+}
+
+func (p *Product) sortVersions() error {
+	collection := make(version.Collection, len(p.Versions))
 	var idx int
-	for k, _ := range versions {
+	for k, _ := range p.Versions {
 		v, err := version.NewVersion(k)
 		if err != nil {
 			return err

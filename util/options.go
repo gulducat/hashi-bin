@@ -14,6 +14,6 @@ func GetOptions() ExtraOptions {
 	return ExtraOptions{
 		All:  os.Getenv("HASHI_ALL") != "" || InArray(os.Args, "-all"),
 		Beta: os.Getenv("HASHI_BETA") != "" || InArray(os.Args, "-with-beta"),
-		Ent:  os.Getenv("HASHI_ENTERPRISE") != "" || InArray(os.Args, "-only-enterprise"),
+		Ent:  os.Getenv("HASHI_ENTERPRISE") != "" || InArray(os.Args, "-enterprise"),
 	}
 }

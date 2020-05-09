@@ -1,6 +1,8 @@
 package types
 
 import (
+	"regexp"
+
 	"github.com/gulducat/hashi-releases/vars"
 )
 
@@ -30,4 +32,14 @@ func (v *Version) GetBuild(os string, arch string) *Build {
 
 func (v *Version) GetBuildForLocal() *Build {
 	return v.GetBuild(vars.LocalOS, vars.LocalArch)
+}
+
+func (v *Version) IsBeta() bool {
+	re := regexp.MustCompile(`-(beta|rc)`)
+	return re.FindStringIndex(v.Version) != nil
+}
+
+func (v *Version) IsEnterprise() bool {
+	re := regexp.MustCompile(`\+ent`)
+	return re.FindStringIndex(v.Version) != nil
 }

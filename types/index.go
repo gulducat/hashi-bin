@@ -88,18 +88,6 @@ func (i *Index) GetProduct(name string) (*Product, error) {
 	return product, nil
 }
 
-func (i *Index) ListVersions(product string) []string {
-	p, ok := i.Products[product]
-	if !ok {
-		return nil
-	}
-	versions := make([]string, len(p.Sorted))
-	for idx, v := range p.Sorted {
-		versions[idx] = v.Original()
-	}
-	return versions
-}
-
 func (i *Index) ListProducts() []string {
 	products := make([]string, len(i.Products))
 	var idx int
