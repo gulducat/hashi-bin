@@ -1,4 +1,8 @@
-package main
+package types
+
+import (
+	"github.com/gulducat/hashi-releases/vars"
+)
 
 type Version struct {
 	Product    string   `json:"name"`
@@ -11,7 +15,7 @@ type Version struct {
 func (v *Version) GetBuild(os string, arch string) *Build {
 	// TODO: feels bad, darwin arches for vagrant .dmg downloads...
 	arches := []string{arch}
-	if localOS == "darwin" {
+	if vars.LocalOS == "darwin" {
 		arches = []string{"amd64", "x86_64"}
 	}
 	for _, b := range v.Builds {
@@ -25,5 +29,5 @@ func (v *Version) GetBuild(os string, arch string) *Build {
 }
 
 func (v *Version) GetBuildForLocal() *Build {
-	return v.GetBuild(localOS, localArch)
+	return v.GetBuild(vars.LocalOS, vars.LocalArch)
 }

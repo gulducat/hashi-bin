@@ -1,4 +1,4 @@
-package main
+package util
 
 import (
 	"bufio"
@@ -9,6 +9,8 @@ import (
 	"io/ioutil"
 	"path"
 	"strings"
+
+	"github.com/gulducat/hashi-releases/vars"
 )
 
 const (
@@ -26,7 +28,7 @@ func CheckFile(fpath string) error {
 func CheckBytes(fileName string, b []byte) error {
 	product, version := ProductVersionFromName(fileName)
 	if product == "" || version == "" {
-		return errors.New("invalid file name")
+		return errors.New("invalid file name: " + fileName)
 	}
 	shas, err := GetSHASums(product, version)
 	if err != nil {
@@ -68,7 +70,7 @@ func GetSHASums(product, version string) (map[string][]byte, error) {
 
 func SHASumLink(product, version string) string {
 	fileName := strings.Join([]string{product, version, SHASumSuffix}, "_")
-	return strings.Join([]string{ReleasesURL, product, version, fileName}, "/")
+	return strings.Join([]string{vars.ReleasesURL, product, version, fileName}, "/")
 }
 
 func ProductVersionFromName(fileName string) (string, string) {

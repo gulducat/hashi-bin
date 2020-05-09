@@ -1,4 +1,4 @@
-module github.com/abennett/hashi-releases
+module github.com/gulducat/hashi-releases
 
 go 1.13
 

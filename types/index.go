@@ -1,4 +1,4 @@
-package main
+package types
 
 import (
 	"encoding/json"
@@ -7,14 +7,18 @@ import (
 	"os"
 	"path"
 	"strings"
+
+	"github.com/gulducat/hashi-releases/util"
 )
+
+// TODO: don't panic.
 
 type Index struct {
 	Products map[string]*Product
 }
 
-func NewIndex() Index {
-	resp, err := HTTPGet(ReleasesURL + "/index.json")
+func NewIndex(IndexURL string) Index {
+	resp, err := util.HTTPGet(IndexURL)
 	if err != nil {
 		panic(err)
 	}
@@ -26,7 +30,8 @@ func NewIndex() Index {
 	}
 
 	// TODO: cache expiration or purge
-	cacheFilePath := path.Join(tmpDir, etag, etag+indexSuffix)
+	tmpDir := path.Join(os.TempDir(), "hashi-releases") // # TODO: rename
+	cacheFilePath := path.Join(tmpDir, etag, etag+".index")
 
 	b, err := ioutil.ReadFile(cacheFilePath)
 	if err != nil {

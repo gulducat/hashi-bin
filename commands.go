@@ -4,29 +4,15 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 
+	"github.com/gulducat/hashi-releases/types"
+	"github.com/gulducat/hashi-releases/util"
+	"github.com/gulducat/hashi-releases/vars"
 	"github.com/mitchellh/cli"
 )
 
-type ExtraOptions struct {
-	all  bool
-	beta bool
-	ent  bool
-}
-
-func GetOptions() ExtraOptions {
-	// feels a bit jank but it works..
-	// TODO: add these args to -h somehow...
-	return ExtraOptions{
-		all:  os.Getenv("HASHI_ALL") != "" || InArray(os.Args, "-all"),
-		beta: os.Getenv("HASHI_BETA") != "" || InArray(os.Args, "-with-beta"),
-		ent:  os.Getenv("HASHI_ENTERPRISE") != "" || InArray(os.Args, "-only-enterprise"),
-	}
-}
-
-func GetCommands(c *cli.CLI, i *Index) map[string]cli.CommandFactory {
+func GetCommands(c *cli.CLI, i *types.Index) map[string]cli.CommandFactory {
 	commands := make(map[string]cli.CommandFactory)
 
 	options := map[string]string{
@@ -74,14 +60,14 @@ func GetHiddenCommands(c *cli.CLI) []string {
 	// exclude all but core products unless -all
 	// note: c.Commands must already be populated
 	hidden := []string{}
-	opts := GetOptions()
+	opts := util.GetOptions()
 	for cmd, _ := range c.Commands {
 		parts := strings.Split(cmd, " ")
 		if len(parts) != 2 {
 			continue
 		}
 		product := parts[1]
-		if !opts.all && !InArray(CoreProducts, product) {
+		if !opts.All && !util.InArray(vars.CoreProducts, product) {
 			hidden = append(hidden, cmd)
 		}
 	}
@@ -93,7 +79,7 @@ func GetHiddenCommands(c *cli.CLI) []string {
 type TopLevelHelp struct {
 	cli      *cli.CLI
 	option   string
-	index    *Index
+	index    *types.Index
 	synopsis string
 }
 
@@ -117,7 +103,7 @@ func (hc *TopLevelHelp) HelpTemplate() string {
 	// to include only sub-commands for this one command.
 	commands := make(map[string]cli.CommandFactory)
 	for cmd, cft := range hc.cli.Commands {
-		if InArray(hc.cli.HiddenCommands, cmd) {
+		if util.InArray(hc.cli.HiddenCommands, cmd) {
 			continue
 		}
 		if strings.HasPrefix(cmd, hc.option+" ") {
@@ -128,8 +114,8 @@ func (hc *TopLevelHelp) HelpTemplate() string {
 }
 
 type FancyCommand struct {
-	index   *Index
-	product *Product
+	index   *types.Index
+	product *types.Product
 	command string
 }
 
@@ -153,7 +139,7 @@ func (fc *FancyCommand) Run(args []string) int {
 		}
 		return 0
 	case "list":
-		installed, err := ListInstalled(fc.product.Name)
+		installed, err := util.ListInstalled(fc.product.Name)
 		if err != nil {
 			log.Println(err)
 			return 1
@@ -188,7 +174,7 @@ func (fc *FancyCommand) Run(args []string) int {
 	switch fc.command {
 	case "download":
 		// TODO: this feels bad, do something else to download vagrant?
-		if localOS == "darwin" && InArray(DmgOnly, fc.product.Name) {
+		if vars.LocalOS == "darwin" && util.InArray(vars.DmgOnly, fc.product.Name) {
 			_, err = build.DownloadAndSave(build.Filename)
 		} else {
 			_, err = build.DownloadAndExtract("", fc.product.Name)

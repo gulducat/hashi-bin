@@ -1,4 +1,4 @@
-package main
+package types
 
 import (
 	"errors"
@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/gulducat/hashi-releases/util"
 	"github.com/hashicorp/go-version"
 )
 
@@ -35,21 +36,21 @@ func (p *Product) LatestVersion() *Version {
 
 func (p *Product) sortVersions() error {
 	// exclude some versions based on options
-	opts := GetOptions()
+	opts := util.GetOptions()
 	versions := make(map[string]*Version)
 	reBeta := regexp.MustCompile(`-(beta|rc)`)
 	reEnt := regexp.MustCompile(`\+ent`)
 	for s, v := range p.Versions {
 		// hide -beta* and -rc* if not -with-beta
-		if !opts.beta && reBeta.FindStringIndex(s) != nil {
+		if !opts.Beta && reBeta.FindStringIndex(s) != nil {
 			continue
 		}
 		// hide +ent if not -only-enterprise
-		if !opts.ent && reEnt.FindStringIndex(s) != nil {
+		if !opts.Ent && reEnt.FindStringIndex(s) != nil {
 			continue
 		}
 		// show only +ent if -only-enterprise
-		if opts.ent && reEnt.FindStringIndex(s) == nil {
+		if opts.Ent && reEnt.FindStringIndex(s) == nil {
 			continue
 		}
 		// hide vault ".hsm" files

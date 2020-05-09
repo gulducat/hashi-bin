@@ -4,11 +4,12 @@ import (
 	"log"
 	"os"
 
+	"github.com/gulducat/hashi-releases/types"
+	"github.com/gulducat/hashi-releases/vars"
 	"github.com/mitchellh/cli"
 )
 
 var (
-	index      = NewIndex()
 	ListenPort = ":8080"
 	// appVersion         = "v1.0.1"
 	versionCommandHelp = "output the version of this application"
@@ -41,6 +42,7 @@ func main() {
 	// c.HelpFunc = HelpyHelp(c.Name)
 	c.Args = os.Args[1:]
 	// c.GlobalFlags = ......
+	index := types.NewIndex(vars.ReleasesURL + "/index.json")
 	c.Commands = GetCommands(c, &index)
 	// note: i'm not using this quite right... TopLevelHelp is actually handling this.
 	c.HiddenCommands = GetHiddenCommands(c)

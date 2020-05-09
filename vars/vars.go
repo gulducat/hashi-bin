@@ -1,36 +1,27 @@
-package main
+package vars
 
 import (
-	"os"
-	"path"
 	"runtime"
 
 	"github.com/hashicorp/go-hclog"
 )
 
 const (
-	ReleasesURL    = "https://releases.hashicorp.com"
-	ReleasesDomain = "releases.hashicorp.com"
-
-	indexSuffix = ".index"
-
-	localOS   = runtime.GOOS
-	localArch = runtime.GOARCH
+	ReleasesURL = "https://releases.hashicorp.com"
+	LocalOS     = runtime.GOOS
+	LocalArch   = runtime.GOARCH
 )
 
 var (
-	tmpDir = path.Join(os.TempDir(), "hashi-releases")
-
 	logger hclog.Logger // TODO: logger...?
 
 	// for the general public, only show these.
-	// --all or HASHI_ALL_PRODUCTS env var will show _all_ products
+	// -all or HASHI_ALL env var will show _all_ products
 	CoreProducts = []string{
 		"consul",
 		"nomad",
 		"packer",
 		"sentinel",
-		// "serf", // ?
 		"terraform",
 		"vagrant",
 		"vault",

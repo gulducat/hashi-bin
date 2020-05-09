@@ -1,10 +1,12 @@
-package main
+package types
 
 import (
 	"io/ioutil"
 	"log"
 	"os"
 	"path"
+
+	"github.com/gulducat/hashi-releases/util"
 )
 
 type Build struct {
@@ -16,12 +18,13 @@ type Build struct {
 	URL      string `json:"url"`
 }
 
+
 func (b *Build) DownloadAndCheck() ([]byte, error) {
-	bts, err := HTTPGetBody(b.URL)
+	bts, err := util.HTTPGetBody(b.URL)
 	if err != nil {
 		return nil, err
 	}
-	err = CheckBytes(b.Filename, bts)
+	err = util.CheckBytes(b.Filename, bts)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +46,7 @@ func (b *Build) DownloadAndSave(filePath string) (string, error) {
 
 func (b *Build) DownloadAndExtract(dir string, product string) (string, error) {
 	bts, err := b.DownloadAndCheck()
-	filePath, err := ExtractZip(product, dir, bts)
+	filePath, err := util.ExtractZip(product, dir, bts)
 	if err != nil {
 		return "", err
 	}
@@ -52,7 +55,7 @@ func (b *Build) DownloadAndExtract(dir string, product string) (string, error) {
 }
 
 func (b *Build) Install() error {
-	binDir, err := BinDir(b.Product)
+	binDir, err := util.BinDir(b.Product)
 	if err != nil {
 		return err
 	}
@@ -74,7 +77,7 @@ func (b *Build) Install() error {
 }
 
 func (b *Build) Uninstall() error {
-	binDir, err := BinDir(b.Product)
+	binDir, err := util.BinDir(b.Product)
 	if err != nil {
 		return err
 	}
@@ -84,18 +87,19 @@ func (b *Build) Uninstall() error {
 		return err
 	}
 	// TODO: only remove symlink if uninstalling current active version - another reason to make a separate link-reading function.
-	return RemoveLink(b.Product)
+	return util.RemoveLink(b.Product)
 }
 
+// TODO: copy file instead of symlink.
 func (b *Build) Link() error {
-	binDir, err := BinDir(b.Product)
+	binDir, err := util.BinDir(b.Product)
 	if err != nil {
 		return err
 	}
 	filePath := path.Join(binDir, b.Version)
-	link := LinkPath(b.Product)
+	link := util.LinkPath(b.Product)
 	// TODO: check if filePath exists, if not, suggest `install` ?
-	RemoveLink(b.Product)
+	util.RemoveLink(b.Product)
 	log.Printf("Creating symlink %s -> %s\n", link, filePath)
 	return os.Symlink(filePath, link)
 }
