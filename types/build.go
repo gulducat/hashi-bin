@@ -18,6 +18,9 @@ type Build struct {
 	URL      string `json:"url"`
 }
 
+func (b *Build) String() string {
+	return b.Filename
+}
 
 func (b *Build) DownloadAndCheck() ([]byte, error) {
 	bts, err := util.HTTPGetBody(b.URL)

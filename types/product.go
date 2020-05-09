@@ -17,6 +17,10 @@ type Product struct {
 	isSorted bool
 }
 
+func (p *Product) String() string {
+	return p.Name
+}
+
 func (p *Product) GetVersion(version string) (*Version, error) {
 	if version == "latest" {
 		return p.LatestVersion(), nil

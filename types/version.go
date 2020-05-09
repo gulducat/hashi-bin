@@ -14,6 +14,10 @@ type Version struct {
 	Builds     []*Build `json:"builds"`
 }
 
+func (v *Version) String() string {
+	return v.Version
+}
+
 func (v *Version) GetBuild(os string, arch string) *Build {
 	// TODO: feels bad, darwin arches for vagrant .dmg downloads...
 	arches := []string{arch}
