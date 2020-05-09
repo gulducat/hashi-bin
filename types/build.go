@@ -62,17 +62,19 @@ func (b *Build) Install() error {
 	if err != nil {
 		return err
 	}
-	// TODO: check if already installed before downloading?
-	_, err = b.DownloadAndExtract(binDir, b.Product)
-	if err != nil {
-		return err
-	}
-	// TODO: ExtractZip should put the file directly where we want it?
 	filePath := path.Join(binDir, b.Product)
 	newFilePath := path.Join(binDir, b.Version)
-	err = os.Rename(filePath, newFilePath)
-	if err != nil {
-		return err
+	if _, err := os.Stat(newFilePath); os.IsNotExist(err) {
+		_, err = b.DownloadAndExtract(binDir, b.Product)
+		if err != nil {
+			return err
+		}
+		err = os.Rename(filePath, newFilePath)
+		if err != nil {
+			return err
+		}
+	} else {
+		log.Printf("%s %s already installed", b.Product, b.Version)
 	}
 	log.Printf("installed to: %s\n", newFilePath)
 	log.Printf("to use: `hashi-bin use %s %s`\n", b.Product, b.Version)

@@ -171,7 +171,7 @@ func (fc *FancyCommand) Run(args []string) int {
 		return 1
 	}
 
-	log.Printf("%s-ing %s %s\n", fc.command, fc.product.Name, version.Version)
+	fmt.Printf("%s-ing %s %s\n", fc.command, fc.product.Name, version.Version)
 
 	switch fc.command {
 	case "download":
