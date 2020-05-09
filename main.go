@@ -15,7 +15,7 @@ const version = "0.1.0"
 
 func main() {
 	log.SetFlags(0) // remove timestamp from log messages
-	c := cli.NewCLI("armon", version)
+	c := cli.NewCLI("hashi-bin", version)
 	// c.HelpFunc = HelpyHelp(c.Name)
 	c.Args = os.Args[1:]
 	// c.GlobalFlags = ......

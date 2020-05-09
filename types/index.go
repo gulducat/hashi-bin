@@ -29,7 +29,7 @@ func NewIndex(IndexURL string) (Index, error) {
 	}
 
 	// TODO: cache expiration or purge
-	tmpDir := path.Join(os.TempDir(), "hashi-releases") // # TODO: rename
+	tmpDir := path.Join(os.TempDir(), "hashi-bin")
 	cacheFilePath := path.Join(tmpDir, etag, etag+".index")
 
 	b, err := ioutil.ReadFile(cacheFilePath)
