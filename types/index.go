@@ -88,26 +88,6 @@ func (i *Index) GetProduct(name string) (*Product, error) {
 	return product, nil
 }
 
-func (i *Index) LatestVersion(product string) string { // TODO: remove me? Product.LatestVersion()
-	p, ok := i.Products[product]
-	if !ok {
-		return ""
-	}
-	return p.Sorted[len(p.Sorted)-1].Original()
-}
-
-// func (i *Index) LatestBuild(product, os, arch string) *Build {
-// 	p, ok := i.Products[product]
-// 	if !ok {
-// 		return nil
-// 	}
-// 	v, ok := p.Versions[p.Sorted[len(p.Sorted)-1].Original()]
-// 	if !ok {
-// 		return nil
-// 	}
-// 	return v.GetBuildForLocal()
-// }
-
 func (i *Index) ListVersions(product string) []string {
 	p, ok := i.Products[product]
 	if !ok {

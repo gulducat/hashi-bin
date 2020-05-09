@@ -12,6 +12,8 @@ import (
 	"github.com/mitchellh/cli"
 )
 
+// TODO: autocomplete top-level help?
+
 func GetCommands(c *cli.CLI, i *types.Index) map[string]cli.CommandFactory {
 	commands := make(map[string]cli.CommandFactory)
 
@@ -174,6 +176,7 @@ func (fc *FancyCommand) Run(args []string) int {
 	switch fc.command {
 	case "download":
 		// TODO: this feels bad, do something else to download vagrant?
+		// TODO: also only download on windows
 		if vars.LocalOS == "darwin" && util.InArray(vars.DmgOnly, fc.product.Name) {
 			_, err = build.DownloadAndSave(build.Filename)
 		} else {
