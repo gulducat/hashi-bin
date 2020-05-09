@@ -11,22 +11,21 @@ import (
 	"github.com/gulducat/hashi-releases/util"
 )
 
-// TODO: don't panic.
-
 type Index struct {
 	Products map[string]*Product
 }
 
-func NewIndex(IndexURL string) Index {
+func NewIndex(IndexURL string) (Index, error) {
+	var index Index
 	resp, err := util.HTTPGet(IndexURL)
 	if err != nil {
-		panic(err)
+		return index, err
 	}
 	defer resp.Body.Close()
 	etag := resp.Header.Get("Etag")
 	etag = strings.Trim(etag, "\"")
 	if etag == "" {
-		panic("no etag found")
+		return index, errors.New("no etag found")
 	}
 
 	// TODO: cache expiration or purge
@@ -37,23 +36,23 @@ func NewIndex(IndexURL string) Index {
 	if err != nil {
 		b, err = ioutil.ReadAll(resp.Body)
 		if err != nil {
-			panic(err)
+			return index, err
 		}
 		if err = os.MkdirAll(path.Dir(cacheFilePath), 0700); err != nil {
-			panic(err)
+			return index, err
 		}
 		if err = ioutil.WriteFile(cacheFilePath, b, 0600); err != nil {
-			panic(err)
+			return index, err
 		}
 	}
 
 	// this intermediary `products` var is so the Index only gets core Products unless -all
 	var products map[string]*Product
 	if err = json.Unmarshal(b, &products); err != nil {
-		panic(err)
+		return index, err
 	}
 
-	index := Index{
+	index = Index{
 		Products: make(map[string]*Product),
 	}
 	for n, p := range products {
@@ -62,10 +61,10 @@ func NewIndex(IndexURL string) Index {
 
 	for _, v := range index.Products {
 		if err = v.sortVersions(); err != nil {
-			panic(err)
+			return index, err
 		}
 	}
-	return index
+	return index, nil
 }
 
 func (i *Index) GetProductVersion(name string, version string) (*Product, *Version, error) {

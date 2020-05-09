@@ -19,14 +19,17 @@ func main() {
 	// c.HelpFunc = HelpyHelp(c.Name)
 	c.Args = os.Args[1:]
 	// c.GlobalFlags = ......
-	index := types.NewIndex(vars.ReleasesURL + "/index.json")
+	index, err := types.NewIndex(vars.ReleasesURL + "/index.json")
+	if err != nil {
+		log.Fatal(err)
+	}
 	c.Commands = GetCommands(c, &index)
 	// note: i'm not using this quite right... TopLevelHelp is actually handling this.
 	c.HiddenCommands = GetHiddenCommands(c)
 	// c.Commands["version"] = versionFactory
 	exitStatus, err := c.Run()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	os.Exit(exitStatus)
 }
