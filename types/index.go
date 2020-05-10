@@ -46,37 +46,39 @@ func NewIndex(IndexURL string) (Index, error) {
 		}
 	}
 
-	// this intermediary `products` var is so the Index only gets core Products unless -all
-	var products map[string]*Product
-	if err = json.Unmarshal(b, &products); err != nil {
+	if err = json.Unmarshal(b, &index.Products); err != nil {
 		return index, err
 	}
 
-	index = Index{
-		Products: make(map[string]*Product),
-	}
-	for n, p := range products {
-		index.Products[n] = p
-	}
-
-	for _, v := range index.Products {
-		if err = v.sortVersions(); err != nil {
+	// massage the datas
+	for _, p := range index.Products {
+		if err = p.sortVersions(); err != nil {
 			return index, err
 		}
+		// populate children's parent fields for convenience
+		// surely there is a better way?
+		p.index = &index
+		for _, v := range p.Versions {
+			v.product = p
+			for _, b := range v.Builds {
+				b.version = v
+			}
+		}
 	}
+
 	return index, nil
 }
 
-func (i *Index) GetProductVersion(name string, version string) (*Product, *Version, error) {
-	p, err := i.GetProduct(name)
+func (i *Index) GetVersion(product string, version string) (*Version, error) {
+	p, err := i.GetProduct(product)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	v, err := p.GetVersion(version)
 	if err != nil {
-		return p, nil, err
+		return nil, err
 	}
-	return p, v, nil
+	return v, nil
 }
 
 func (i *Index) GetProduct(name string) (*Product, error) {

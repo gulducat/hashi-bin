@@ -10,12 +10,13 @@ import (
 )
 
 type Build struct {
-	Product  string `json:"name"`
-	Version  string `json:"version"`
-	OS       string `json:"os"`
-	Arch     string `json:"arch"`
-	Filename string `json:"filename"`
-	URL      string `json:"url"`
+	version  *Version // parent
+	Product  string   `json:"name"`
+	Version  string   `json:"version"`
+	OS       string   `json:"os"`
+	Arch     string   `json:"arch"`
+	Filename string   `json:"filename"`
+	URL      string   `json:"url"`
 }
 
 func (b *Build) String() string {
@@ -91,8 +92,10 @@ func (b *Build) Uninstall() error {
 	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
-	// TODO: only remove symlink if uninstalling current active version - another reason to make a separate link-reading function.
-	return util.RemoveLink(b.Product)
+	if b.version.IsActive() {
+		return util.RemoveLink(b.Product)
+	}
+	return nil
 }
 
 // TODO: copy file instead of symlink.

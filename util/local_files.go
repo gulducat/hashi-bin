@@ -8,39 +8,46 @@ import (
 	"path"
 )
 
-func ListInstalled(product string) ([]string, error) {
-	// get current symlink target if present
-	var current string
-	link := LinkPath(product)
+func CurrentActive(product string) (version string, link string, target string) {
+	link = LinkPath(product)
 	target, err := os.Readlink(link)
-	if err == nil {
-		log.Printf("%s -> %s\n", link, target)
-		_, current = path.Split(target)
+	if err != nil {
+		return "", "", ""
 	}
+	_, version = path.Split(target)
+	return version, link, target
+}
+
+func ListInstalled(product string) ([]string, error) {
+	var i []string
 
 	// ls hashi-bin/{product}/ to discover installed versions
 	binDir, err := BinDir(product)
 	if err != nil {
 		log.Println(err)
-		return []string{}, err
+		return i, err
 	}
 	fileInfo, err := ioutil.ReadDir(binDir)
 	if err != nil {
 		log.Println(err)
-		return []string{}, err
+		return i, err
 	}
 
-	// build list of versions with "*" indicating currently-in-use
-	installed := []string{}
+	current, link, target := CurrentActive(product)
+	if current != "" {
+		log.Printf("%s -> %s\n", link, target)
+	}
+
 	for _, file := range fileInfo {
 		name := file.Name()
 		if name == current {
-			installed = append(installed, fmt.Sprintf("%s *", name))
+			i = append(i, fmt.Sprintf("%s (current)", name))
 		} else {
-			installed = append(installed, name)
+			i = append(i, name)
 		}
 	}
-	return installed, nil
+
+	return i, nil
 }
 
 func BinDir(product string) (string, error) {

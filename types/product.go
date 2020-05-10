@@ -11,6 +11,7 @@ import (
 )
 
 type Product struct {
+	index    *Index              // parent
 	Name     string              `json:"name"`
 	Versions map[string]*Version `json:"versions"`
 	Sorted   version.Collection

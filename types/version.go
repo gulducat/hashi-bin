@@ -3,10 +3,12 @@ package types
 import (
 	"regexp"
 
+	"github.com/gulducat/hashi-releases/util"
 	"github.com/gulducat/hashi-releases/vars"
 )
 
 type Version struct {
+	product    *Product // parent
 	Product    string   `json:"name"`
 	Version    string   `json:"version"`
 	SHASums    string   `json:"shasums"`
@@ -36,6 +38,11 @@ func (v *Version) GetBuild(os string, arch string) *Build {
 
 func (v *Version) GetBuildForLocal() *Build {
 	return v.GetBuild(vars.LocalOS, vars.LocalArch)
+}
+
+func (v *Version) IsActive() bool {
+	current, _, _ := util.CurrentActive(v.Product)
+	return v.Version == current
 }
 
 func (v *Version) IsBeta() bool {
