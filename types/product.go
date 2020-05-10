@@ -34,8 +34,9 @@ func (p *Product) GetVersion(version string) (*Version, error) {
 }
 
 func (p *Product) LatestVersion() *Version {
-	versionString := p.Sorted[len(p.Sorted)-1].Original()
-	return p.Versions[versionString]
+	versions := p.ListVersions()
+	version := versions[len(versions)-1]
+	return p.Versions[version]
 }
 
 func (p *Product) ListVersions() []string {
