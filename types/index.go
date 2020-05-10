@@ -7,45 +7,27 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/gulducat/hashi-releases/util"
+)
+
+var (
+	CacheFilePath = path.Join(os.TempDir(), "hashicorp.releases.json")
+	CacheMaxAge   = 60 // minutes
 )
 
 type Index struct {
 	Products map[string]*Product
 }
 
-func NewIndex(IndexURL string) (Index, error) {
+func NewIndex(indexURL string) (Index, error) {
 	var index Index
-	resp, err := util.HTTPGet(IndexURL)
+
+	b, err := GetIndexBody(indexURL)
 	if err != nil {
 		return index, err
 	}
-	defer resp.Body.Close()
-	etag := resp.Header.Get("Etag")
-	etag = strings.Trim(etag, "\"")
-	if etag == "" {
-		return index, errors.New("no etag found")
-	}
-
-	// TODO: cache expiration or purge
-	tmpDir := path.Join(os.TempDir(), "hashi-bin")
-	cacheFilePath := path.Join(tmpDir, etag, etag+".index")
-
-	b, err := ioutil.ReadFile(cacheFilePath)
-	if err != nil {
-		b, err = ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return index, err
-		}
-		if err = os.MkdirAll(path.Dir(cacheFilePath), 0700); err != nil {
-			return index, err
-		}
-		if err = ioutil.WriteFile(cacheFilePath, b, 0600); err != nil {
-			return index, err
-		}
-	}
-
 	if err = json.Unmarshal(b, &index.Products); err != nil {
 		return index, err
 	}
@@ -97,4 +79,55 @@ func (i *Index) ListProducts() []string {
 		idx++
 	}
 	return products
+}
+
+func GetIndexBody(indexURL string) ([]byte, error) {
+	if err := ExpireCache(); err != nil {
+		return nil, err
+	}
+
+	b, err := ioutil.ReadFile(CacheFilePath)
+	if err != nil {
+		resp, err := util.HTTPGet(indexURL)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+		etag := resp.Header.Get("Etag")
+		etag = strings.Trim(etag, "\"")
+		if etag == "" {
+			return nil, errors.New("no etag found in http response headers")
+		}
+
+		b, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		if err = os.MkdirAll(path.Dir(CacheFilePath), 0700); err != nil {
+			return nil, err
+		}
+		if err = ioutil.WriteFile(CacheFilePath, b, 0600); err != nil {
+			return nil, err
+		}
+	}
+
+	return b, nil
+}
+
+func ExpireCache() error {
+	stat, err := os.Stat(CacheFilePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	age := time.Since(stat.ModTime()).Minutes()
+	if int(age) >= CacheMaxAge {
+		err = os.Remove(CacheFilePath)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
