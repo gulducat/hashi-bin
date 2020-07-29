@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/gulducat/hashi-releases/util"
+	"github.com/gulducat/hashi-bin/util"
 	"github.com/hashicorp/go-version"
 )
 

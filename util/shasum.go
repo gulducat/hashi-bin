@@ -10,7 +10,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/gulducat/hashi-releases/vars"
+	"github.com/gulducat/hashi-bin/vars"
 )
 
 const (

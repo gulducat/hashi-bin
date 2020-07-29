@@ -3,8 +3,8 @@ package types
 import (
 	"regexp"
 
-	"github.com/gulducat/hashi-releases/util"
-	"github.com/gulducat/hashi-releases/vars"
+	"github.com/gulducat/hashi-bin/util"
+	"github.com/gulducat/hashi-bin/vars"
 )
 
 type Version struct {

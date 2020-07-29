@@ -6,7 +6,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/gulducat/hashi-releases/util"
+	"github.com/gulducat/hashi-bin/util"
 )
 
 type Build struct {

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gulducat/hashi-releases/util"
+	"github.com/gulducat/hashi-bin/util"
 )
 
 var (
