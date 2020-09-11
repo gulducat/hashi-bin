@@ -22,7 +22,8 @@ type Product struct {
 func NewProduct(indexURL string) (*Product, error) {
 	var product Product
 
-	b, err := GetIndexBody(indexURL, false)
+	cacheIndex := false
+	b, err := GetIndexBody(indexURL, cacheIndex)
 	if err != nil {
 		return &product, err
 	}

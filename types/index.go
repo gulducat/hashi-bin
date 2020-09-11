@@ -24,7 +24,8 @@ type Index struct {
 func NewIndex(indexURL string) (Index, error) {
 	var index Index
 
-	b, err := GetIndexBody(indexURL, true)
+	cacheIndex := true
+	b, err := GetIndexBody(indexURL, cacheIndex)
 	if err != nil {
 		return index, err
 	}
