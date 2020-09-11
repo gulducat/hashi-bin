@@ -22,12 +22,10 @@ type Product struct {
 func NewProduct(indexURL string) (*Product, error) {
 	var product Product
 
-	_ = BustCache()
-	b, err := GetIndexBody(indexURL)
+	b, err := GetIndexBody(indexURL, false)
 	if err != nil {
 		return &product, err
 	}
-	_ = BustCache()
 	if err = json.Unmarshal(b, &product); err != nil {
 		return &product, err
 	}

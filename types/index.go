@@ -24,7 +24,7 @@ type Index struct {
 func NewIndex(indexURL string) (Index, error) {
 	var index Index
 
-	b, err := GetIndexBody(indexURL)
+	b, err := GetIndexBody(indexURL, true)
 	if err != nil {
 		return index, err
 	}
@@ -81,13 +81,13 @@ func (i *Index) ListProducts() []string {
 	return products
 }
 
-func GetIndexBody(indexURL string) ([]byte, error) {
+func GetIndexBody(indexURL string, cache bool) ([]byte, error) {
 	if err := ExpireCache(); err != nil {
 		return nil, err
 	}
 
 	b, err := ioutil.ReadFile(CacheFilePath)
-	if err != nil {
+	if err != nil || !cache {
 		resp, err := util.HTTPGet(indexURL)
 		if err != nil {
 			return nil, err
@@ -103,11 +103,13 @@ func GetIndexBody(indexURL string) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		if err = os.MkdirAll(path.Dir(CacheFilePath), 0700); err != nil {
-			return nil, err
-		}
-		if err = ioutil.WriteFile(CacheFilePath, b, 0600); err != nil {
-			return nil, err
+		if cache {
+			if err = os.MkdirAll(path.Dir(CacheFilePath), 0700); err != nil {
+				return nil, err
+			}
+			if err = ioutil.WriteFile(CacheFilePath, b, 0600); err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -130,9 +132,4 @@ func ExpireCache() error {
 		}
 	}
 	return nil
-}
-
-func BustCache() error {
-	CacheMaxAge = 0
-	return ExpireCache()
 }
