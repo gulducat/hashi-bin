@@ -131,3 +131,8 @@ func ExpireCache() error {
 	}
 	return nil
 }
+
+func BustCache() error {
+	CacheMaxAge = 0
+	return ExpireCache()
+}

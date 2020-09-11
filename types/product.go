@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
@@ -16,6 +17,33 @@ type Product struct {
 	Versions map[string]*Version `json:"versions"`
 	Sorted   version.Collection
 	isSorted bool
+}
+
+func NewProduct(indexURL string) (*Product, error) {
+	var product Product
+
+	_ = BustCache()
+	b, err := GetIndexBody(indexURL)
+	if err != nil {
+		return &product, err
+	}
+	_ = BustCache()
+	if err = json.Unmarshal(b, &product); err != nil {
+		return &product, err
+	}
+
+	if err = product.sortVersions(); err != nil {
+		return &product, err
+	}
+
+	for _, v := range product.Versions {
+		v.product = &product
+		for _, b := range v.Builds {
+			b.version = v
+		}
+	}
+
+	return &product, nil
 }
 
 func (p *Product) String() string {
