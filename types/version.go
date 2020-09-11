@@ -46,7 +46,7 @@ func (v *Version) IsActive() bool {
 }
 
 func (v *Version) IsBeta() bool {
-	re := regexp.MustCompile(`-(beta|rc)`)
+	re := regexp.MustCompile(`-(alpha|beta|rc)`)
 	return re.FindStringIndex(v.Version) != nil
 }
 
